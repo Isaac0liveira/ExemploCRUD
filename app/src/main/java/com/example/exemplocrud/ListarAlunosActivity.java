@@ -1,12 +1,19 @@
 package com.example.exemplocrud;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
@@ -23,14 +30,16 @@ public class ListarAlunosActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listar_alunos);
         listView = findViewById(R.id.lista_alunos);
         dao = new AlunoDAO(this);
         alunos = dao.obterTodos();
         alunosFiltrados.addAll(alunos);
-        ArrayAdapter<Aluno> adapter = new ArrayAdapter<Aluno>(this, android.R.layout.simple_list_item_1, alunosFiltrados);
+        AlunoAdapter adapter = new AlunoAdapter(alunosFiltrados, this);
         listView.setAdapter(adapter);
+        registerForContextMenu(listView);
     }
 
     public boolean onCreateOptionsMenu(Menu menu){
@@ -53,6 +62,12 @@ public class ListarAlunosActivity extends AppCompatActivity {
         return true;
     }
 
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater i = getMenuInflater();
+        i.inflate(R.menu.menu_contexto, menu);
+    }
+
     public void procuraAluno(String nome){
         alunosFiltrados.clear();
         for(Aluno a : alunos){
@@ -68,6 +83,28 @@ public class ListarAlunosActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void excluir(MenuItem item){
+        AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        Aluno alunoExcluir = alunosFiltrados.get(menuInfo.position);
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Atenção").setMessage("Deseja realmente excluir este item?")
+                .setNegativeButton("Não", null).setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        alunosFiltrados.remove(alunoExcluir);
+                        alunos.remove(alunoExcluir);
+                        dao.excluir(alunoExcluir);
+                        listView.invalidateViews();
+                    }
+                }).create();
+        dialog.show();
+    }
+
+    public void atualizar(MenuItem item){
+        AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        Aluno alunoAtualizar = alunosFiltrados.get(menuInfo.position);
+        Intent intent = new Intent(this, CadastroAlunoActivity.class).putExtra("aluno", alunoAtualizar);
+        startActivity(intent);
+    }
     @Override
     public void onResume() {
         super.onResume();

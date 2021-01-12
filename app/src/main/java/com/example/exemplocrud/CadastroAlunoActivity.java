@@ -2,6 +2,7 @@ package com.example.exemplocrud;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -11,6 +12,8 @@ public class CadastroAlunoActivity extends AppCompatActivity {
 
     private EditText nome, cpf, telefone;
     private AlunoDAO dao;
+    Aluno aluno;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,14 +23,30 @@ public class CadastroAlunoActivity extends AppCompatActivity {
         cpf = findViewById(R.id.editCPF);
         telefone = findViewById(R.id.editTelefone);
         dao = new AlunoDAO(this);
+
+        Intent intent = getIntent();
+        if(intent.hasExtra("aluno")){
+            aluno = (Aluno) intent.getSerializableExtra("aluno");
+            nome.setText(aluno.getNome());
+            cpf.setText(aluno.getCpf());
+            telefone.setText(aluno.getTelefone());
+        }
     }
 
     public void salvar(View view){
-        Aluno a = new Aluno();
-        a.setNome(nome.getText().toString());
-        a.setCpf(cpf.getText().toString());
-        a.setTelefone(telefone.getText().toString());
-        long id = dao.inserir(a);
-        Toast.makeText(this, "Aluno inserido com id: " + id, Toast.LENGTH_SHORT).show();
+        if(aluno == null) {
+            Aluno aluno = new Aluno();
+            aluno.setNome(nome.getText().toString());
+            aluno.setCpf(cpf.getText().toString());
+            aluno.setTelefone(telefone.getText().toString());
+            long id = dao.inserir(aluno);
+            Toast.makeText(this, "Aluno inserido com id: " + id, Toast.LENGTH_SHORT).show();
+        }else{
+            aluno.setNome(nome.getText().toString());
+            aluno.setCpf(cpf.getText().toString());
+            aluno.setTelefone(telefone.getText().toString());
+            dao.atualizar(aluno);
+            Toast.makeText(this, "Aluno atualizado com sucesso!", Toast.LENGTH_SHORT).show();
+        }
     }
 }
